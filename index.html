@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Revision Time with Miss Numby!</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html,body{
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body{
+  background: linear-gradient(170deg, #1B5E20 0%, #2E7D32 20%, #43A047 40%, #66BB6A 60%, #81C784 80%, #A5D6A7 100%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 8px 30px;
+  position:relative;
+}
+
+/* ── FLOATING DECORATIONS ── */
+.float-deco{
+  position:fixed;pointer-events:none;opacity:0.09;
+  font-size:clamp(26px,5.5vw,50px);z-index:0;
+  animation: floatAround 20s ease-in-out infinite;
+}
+@keyframes floatAround{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  25%{transform:translateY(-18px) rotate(7deg)}
+  50%{transform:translateY(6px) rotate(-6deg)}
+  75%{transform:translateY(-14px) rotate(4deg)}
+}
+
+/* ── MAIN CONTAINER ── */
+#app{
+  width:100%;max-width:700px;
+  position:relative;z-index:1;
+}
+
+/* ── HEADER ── */
+.header{
+  background:linear-gradient(135deg,#FFF176,#FFD54F);
+  border-radius:20px;padding:14px 20px;
+  margin-bottom:14px;text-align:center;
+  box-shadow:0 6px 28px rgba(255,213,79,0.45);
+}
+.header h1{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(18px,4vw,28px);
+  color:#1B5E20;
+  text-shadow:1px 1px 0 rgba(255,255,255,0.5);
+}
+.header p{
+  font-size:clamp(11px,2vw,14px);
+  color:#33691E;font-weight:700;margin-top:4px;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{
+  height:10px;background:rgba(255,255,255,0.3);
+  border-radius:50px;margin:10px 0 14px;overflow:hidden;
+}
+.progress-bar{
+  height:100%;background:linear-gradient(90deg,#FFF176,#FFD54F);
+  border-radius:50px;transition:width 0.8s ease;width:0%;
+}
+
+/* ── SPEECH BUBBLE ── */
+.speech-area{
+  background:linear-gradient(135deg,#FFF8E1,#FFF3C4);
+  border:3px solid #FFD54F;
+  border-radius:8px 20px 20px 20px;
+  padding:16px 20px;margin-bottom:14px;
+  min-height:70px;
+  box-shadow:0 4px 16px rgba(255,213,79,0.3);
+}
+.speech-label{
+  font-family:'Fredoka One',cursive;
+  font-size:12px;color:#F9A825;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+.speech-text{
+  font-size:clamp(14px,2.2vw,17px);
+  color:#3E2723;font-weight:700;line-height:1.7;
+}
+
+/* ── ACTIVITY CARD ── */
+.activity-card{
+  background:rgba(255,255,255,0.96);
+  border-radius:20px;padding:20px;
+  box-shadow:0 8px 32px rgba(27,94,32,0.18);
+  margin-bottom:14px;
+}
+.activity-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(15px,2.8vw,22px);
+  color:#2E7D32;margin-bottom:16px;
+  text-align:center;
+  padding:8px 16px;
+  background:linear-gradient(135deg,#E8F5E9,#C8E6C9);
+  border-radius:12px;
+}
+
+/* ══════════════════════════════════════
+   CHOOSE BIGGEST / SMALLEST
+   ══════════════════════════════════════ */
+.choose-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:clamp(14px,4vw,28px);
+  margin-bottom:14px;padding:10px;
+  background:#FAFAFA;border-radius:16px;
+  transition:background 0.3s;
+}
+.choose-row.answered-correct{background:linear-gradient(135deg,#E8F5E9,#C8E6C9)}
+.choose-row.answered-wrong{background:linear-gradient(135deg,#FFEBEE,#FFCDD2)}
+
+.choose-tile{
+  width:clamp(62px,16vw,90px);height:clamp(62px,16vw,90px);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:clamp(26px,6vw,40px);
+  color:white;cursor:pointer;position:relative;
+  transition:transform 0.2s, box-shadow 0.3s;
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.choose-tile:active{transform:scale(0.92)}
+.choose-tile.picked{
+  box-shadow:0 0 0 5px #FFD54F, 0 0 0 9px rgba(255,213,79,0.4);
+  transform:scale(1.08);
+}
+.choose-tile.correct-pick{
+  box-shadow:0 0 0 5px #43A047, 0 0 0 9px rgba(67,160,71,0.35);
+  transform:scale(1.08);
+}
+.choose-tile.wrong-pick{
+  box-shadow:0 0 0 5px #E53935, 0 0 0 9px rgba(229,57,53,0.3);
+  transform:scale(1.08);opacity:0.8;
+}
+.choose-tile.not-chosen{opacity:0.45;cursor:default}
+
+.or-label{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(16px,3vw,22px);
+  color:#9E9E9E;
+}
+
+.ct-orange{background:linear-gradient(135deg,#FB8C00,#FFA726)}
+.ct-purple{background:linear-gradient(135deg,#7B1FA2,#AB47BC)}
+.ct-blue{background:linear-gradient(135deg,#1565C0,#42A5F5)}
+.ct-red{background:linear-gradient(135deg,#C62828,#EF5350)}
+.ct-teal{background:linear-gradient(135deg,#00695C,#26A69A)}
+.ct-pink{background:linear-gradient(135deg,#AD1457,#EC407A)}
+.ct-indigo{background:linear-gradient(135deg,#283593,#5C6BC0)}
+.ct-green{background:linear-gradient(135deg,#2E7D32,#66BB6A)}
+.ct-amber{background:linear-gradient(135deg,#FF8F00,#FFB300)}
+.ct-cyan{background:linear-gradient(135deg,#00838F,#26C6DA)}
+
+/* ══════════════════════════════════════
+   TYPE-IN ROWS
+   ══════════════════════════════════════ */
+.num-row{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;padding:8px 12px;
+  background:#F5F5F5;border-radius:14px;
+  transition:background 0.3s;
+  justify-content:center;
+}
+.num-row.answered-correct{background:linear-gradient(135deg,#E8F5E9,#C8E6C9)}
+.num-row.answered-wrong{background:linear-gradient(135deg,#FFEBEE,#FFCDD2)}
+
+.num-display{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(26px,5vw,38px);
+  color:#2E7D32;min-width:40px;text-align:center;
+}
+.arrow-label{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(14px,2.2vw,18px);
+  color:#F9A825;
+}
+.answer-box{
+  width:clamp(50px,12vw,70px);height:clamp(50px,12vw,70px);
+  border:3px dashed #81C784;border-radius:14px;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(24px,4.5vw,34px);
+  text-align:center;color:#2E7D32;
+  background:white;outline:none;
+  transition:border-color 0.3s, background 0.3s, transform 0.3s;
+}
+.answer-box:focus{border-color:#FFD54F;background:#FFFDE7;transform:scale(1.05)}
+.answer-box.correct{
+  border-color:#43A047;background:#E8F5E9;color:#2E7D32;
+  animation:popCorrect 0.4s ease;
+}
+.answer-box.wrong{
+  border-color:#E53935;background:#FFEBEE;color:#C62828;
+  animation:popWrong 0.4s ease;
+}
+.answer-box:disabled{opacity:0.9}
+
+/* Remove spinners */
+.answer-box::-webkit-outer-spin-button,
+.answer-box::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.answer-box[type=number]{-moz-appearance:textfield}
+
+.go-btn{
+  width:clamp(40px,10vw,50px);height:clamp(40px,10vw,50px);
+  border:none;border-radius:12px;
+  background:linear-gradient(135deg,#43A047,#66BB6A);
+  color:white;font-family:'Fredoka One',cursive;
+  font-size:clamp(14px,3vw,18px);cursor:pointer;
+  box-shadow:0 3px 10px rgba(67,160,71,0.3);
+  transition:transform 0.15s;flex-shrink:0;
+}
+.go-btn:hover{transform:scale(1.08)}
+.go-btn:disabled{opacity:0.3;cursor:default;transform:none}
+
+@keyframes popCorrect{
+  0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}
+}
+@keyframes popWrong{
+  0%{transform:scale(1)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}100%{transform:scale(1)}
+}
+
+/* ══════════════════════════════════════
+   COMPARE SIGNS  < = >
+   ══════════════════════════════════════ */
+.compare-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:clamp(8px,2.5vw,16px);
+  margin-bottom:14px;padding:10px;
+  background:#FAFAFA;border-radius:16px;
+  transition:background 0.3s;
+}
+.compare-row.answered-correct{background:linear-gradient(135deg,#E8F5E9,#C8E6C9)}
+.compare-row.answered-wrong{background:linear-gradient(135deg,#FFEBEE,#FFCDD2)}
+
+.compare-num{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(28px,6vw,42px);
+  color:#2E7D32;min-width:36px;text-align:center;
+}
+
+.sign-choices{
+  display:flex;gap:6px;
+}
+.sign-btn{
+  width:clamp(44px,11vw,58px);height:clamp(44px,11vw,58px);
+  border:3px solid #E0E0E0;border-radius:12px;
+  background:white;cursor:pointer;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(20px,4.5vw,30px);
+  color:#555;display:flex;align-items:center;justify-content:center;
+  transition:transform 0.15s, border-color 0.3s, background 0.3s, color 0.3s;
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.sign-btn:active{transform:scale(0.9)}
+.sign-btn.correct-sign{
+  border-color:#43A047;background:#E8F5E9;color:#2E7D32;
+  transform:scale(1.1);
+}
+.sign-btn.wrong-sign{
+  border-color:#E53935;background:#FFEBEE;color:#C62828;
+  transform:scale(1.1);
+}
+.sign-btn.dimmed{opacity:0.3;cursor:default}
+
+/* ── RESULTS ── */
+.results-card{
+  background:rgba(255,255,255,0.97);
+  border-radius:20px;padding:24px;
+  box-shadow:0 8px 32px rgba(27,94,32,0.18);
+  text-align:center;
+}
+.results-card h2{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(20px,4vw,28px);
+  color:#2E7D32;margin-bottom:12px;
+}
+.score-display{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(36px,8vw,56px);
+  color:#F9A825;margin:16px 0;
+}
+.results-detail{
+  text-align:left;margin:16px 0;
+  font-size:clamp(13px,2vw,16px);
+  font-weight:700;color:#4E342E;line-height:1.8;
+}
+.result-correct{color:#2E7D32}
+.result-wrong{color:#C62828}
+
+/* ── START SCREEN ── */
+.start-screen{text-align:center;padding:30px 20px}
+.start-btn{
+  display:inline-block;margin-top:20px;
+  padding:16px 48px;border:none;border-radius:50px;
+  font-family:'Fredoka One',cursive;font-size:clamp(18px,3.5vw,24px);
+  color:#1B5E20;cursor:pointer;
+  background:linear-gradient(135deg,#FFF176,#FFD54F);
+  box-shadow:0 6px 24px rgba(255,213,79,0.5);
+  transition:transform 0.2s;
+  animation:pulse 2s ease-in-out infinite;
+}
+.start-btn:hover{transform:scale(1.08)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+/* ── SCENE ── */
+.scene{display:none}
+.scene.active{display:block}
+
+/* ── CONFETTI ── */
+.confetti-wrap{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden}
+.cp{position:absolute;animation:confFall linear forwards}
+@keyframes confFall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg);opacity:0}
+}
+/* ── PASSWORD SCREEN ── */
+#passwordScreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(170deg, #1565C0 0%, #42A5F5 30%, #64B5F6 50%, #90CAF9 70%, #BBDEFB 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.pw-card{
+  background:rgba(255,255,255,0.97);border-radius:24px;padding:36px 28px;
+  max-width:380px;width:90%;text-align:center;
+  box-shadow:0 12px 40px rgba(21,101,192,0.3);
+}
+.pw-card h2{font-family:'Fredoka One',cursive;color:#1565C0;font-size:22px;margin-bottom:6px}
+.pw-card p{font-weight:700;color:#5D4037;font-size:14px;margin-bottom:18px}
+.pw-input{
+  width:80%;padding:14px;border:3px solid #90CAF9;border-radius:14px;
+  font-family:'Fredoka One',cursive;font-size:22px;text-align:center;
+  color:#1565C0;outline:none;transition:border-color 0.3s;
+}
+.pw-input:focus{border-color:#FFB300}
+.pw-btn{
+  display:block;margin:16px auto 0;padding:12px 40px;border:none;border-radius:50px;
+  font-family:'Fredoka One',cursive;font-size:18px;color:white;cursor:pointer;
+  background:linear-gradient(135deg,#43A047,#66BB6A);
+  box-shadow:0 4px 16px rgba(67,160,71,0.4);transition:transform 0.2s;
+}
+.pw-btn:hover{transform:scale(1.05)}
+.pw-error{color:#E53935;font-weight:800;font-size:13px;margin-top:10px;min-height:20px}
+
+/* ── FEEDBACK CARD ── */
+.feedback-card{
+  background:rgba(255,255,255,0.97);border-radius:20px;padding:24px;
+  box-shadow:0 8px 32px rgba(21,101,192,0.15);margin-top:14px;
+}
+.feedback-card h3{font-family:'Fredoka One',cursive;color:#1565C0;font-size:18px;margin-bottom:14px;text-align:center}
+.fb-submit{
+  display:block;margin:16px auto 0;padding:12px 40px;border:none;border-radius:50px;
+  font-family:'Fredoka One',cursive;font-size:16px;color:white;cursor:pointer;
+  background:linear-gradient(135deg,#FF8F00,#FFB300);
+  box-shadow:0 4px 16px rgba(255,179,0,0.4);transition:transform 0.2s;
+}
+.fb-submit:hover{transform:scale(1.05)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- Floating decorations -->
+<div class="float-deco" style="top:6%;left:4%;animation-delay:0s">🌿</div>
+<div class="float-deco" style="top:18%;right:6%;animation-delay:2.5s">⭐</div>
+<div class="float-deco" style="top:38%;left:5%;animation-delay:5s">🌻</div>
+<div class="float-deco" style="top:58%;right:4%;animation-delay:7s">🎈</div>
+<div class="float-deco" style="top:75%;left:8%;animation-delay:9s">🏆</div>
+<div class="float-deco" style="top:28%;right:10%;animation-delay:11s">🌟</div>
+
+<div id="passwordScreen">
+  <div class="pw-card">
+    <div style="font-size:48px;margin-bottom:10px">🔒</div>
+    <h2>Akili Learning</h2>
+    <p>Grade 1 Maths Revision 2<br><span style="font-size:12px;color:#888">Balmoral Primary — April 2026</span></p>
+    <input type="password" class="pw-input" id="pwInput" placeholder="Password" maxlength="20" autocomplete="off">
+    <button class="pw-btn" onclick="checkPassword()">Enter</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Revision Time with Miss Numby!</h1>
+    <p>More / Less &bull; Biggest / Smallest &bull; Between &bull; Compare</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+  <!-- SPEECH BUBBLE -->
+  <div class="speech-area">
+    <div class="speech-label">🌟 Miss Numby says:</div>
+    <div class="speech-text" id="speechText">Getting ready...</div>
+  </div>
+
+  <!-- ═══ SCENE 0: START ═══ -->
+  <div class="scene active" id="scene-start">
+    <div class="activity-card start-screen">
+      <div style="font-size:48px;margin-bottom:12px">📝🌟</div>
+      <h2 style="font-family:'Fredoka One',cursive;color:#2E7D32;font-size:clamp(18px,3.5vw,24px)">
+        Let's see what you remember!
+      </h2>
+      <p style="font-weight:700;color:#5D4037;margin-top:10px;font-size:clamp(13px,2.2vw,16px);line-height:1.6">
+        Today we are going to do revision.<br>
+        Miss Numby will help you!<br>
+        Listen carefully and do your best!
+      </p>
+      <button class="start-btn" id="startBtn" onclick="beginLesson()">
+        Let's Start! 🚀
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 1: CHOOSE BIGGEST ═══ -->
+  <div class="scene" id="scene-biggest">
+    <div class="activity-card">
+      <div class="activity-title">Choose the BIGGEST number! 💪</div>
+      <div id="biggestRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 2: CHOOSE SMALLEST ═══ -->
+  <div class="scene" id="scene-smallest">
+    <div class="activity-card">
+      <div class="activity-title">Choose the SMALLEST number! 🐜</div>
+      <div id="smallestRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 3: WHAT NUMBER COMES BETWEEN ═══ -->
+  <div class="scene" id="scene-between">
+    <div class="activity-card">
+      <div class="activity-title">What number comes BETWEEN? 🔢</div>
+      <div id="betweenRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 4: MAKE 3 LESS ═══ -->
+  <div class="scene" id="scene-less">
+    <div class="activity-card">
+      <div class="activity-title">Make each number 3 LESS!</div>
+      <div id="lessRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 5: MAKE 2 MORE ═══ -->
+  <div class="scene" id="scene-more">
+    <div class="activity-card">
+      <div class="activity-title">Make each number 2 MORE!</div>
+      <div id="moreRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 6: COMPARE SIGNS ═══ -->
+  <div class="scene" id="scene-compare">
+    <div class="activity-card">
+      <div class="activity-title">Bigger than, Smaller than, or Equal? ⚖️</div>
+      <p style="text-align:center;font-weight:700;color:#5D4037;margin-bottom:6px;font-size:clamp(11px,1.8vw,14px)">
+        Remember:
+      </p>
+      <div style="display:flex;justify-content:center;gap:clamp(10px,3vw,24px);margin-bottom:16px;flex-wrap:wrap">
+        <span style="font-family:'Fredoka One',cursive;font-size:clamp(14px,2.5vw,20px);color:#C62828;background:#FFEBEE;padding:6px 14px;border-radius:10px">&lt; smaller than</span>
+        <span style="font-family:'Fredoka One',cursive;font-size:clamp(14px,2.5vw,20px);color:#1565C0;background:#E3F2FD;padding:6px 14px;border-radius:10px">= equals</span>
+        <span style="font-family:'Fredoka One',cursive;font-size:clamp(14px,2.5vw,20px);color:#2E7D32;background:#E8F5E9;padding:6px 14px;border-radius:10px">&gt; bigger than</span>
+      </div>
+      <div id="compareRows"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 7: RESULTS ═══ -->
+  <div class="scene" id="scene-results">
+    <div class="results-card">
+      <h2>Well done! You finished! 🎉</h2>
+      <div class="score-display" id="scoreDisplay"></div>
+      <div class="results-detail" id="resultsDetail"></div>
+      <div id="parentMessage" style="margin-top:18px;padding:16px;background:#FFF8E1;border-radius:14px;border:2px solid #FFD54F;text-align:left;font-size:clamp(12px,2vw,15px);font-weight:700;color:#5D4037;line-height:1.7"></div>
+    </div>
+
+    <!-- FEEDBACK FORM LINK -->
+    <div class="feedback-card">
+      <h3>Please Complete the Feedback Form</h3>
+      <p style="text-align:center;font-weight:700;color:#5D4037;font-size:14px;line-height:1.6;margin-bottom:16px">
+        Your feedback helps us improve Akili Learning for your child.<br>
+        The form takes about 1 minute to complete.
+      </p>
+      <p style="text-align:center;font-weight:700;color:#1565C0;font-size:13px;margin-bottom:8px">
+        📝 Please remember to include:
+      </p>
+      <ul style="text-align:left;font-weight:700;color:#5D4037;font-size:13px;line-height:1.8;max-width:300px;margin:0 auto 16px;padding-left:20px">
+        <li>Your school's name</li>
+        <li>Your child's name &amp; grade</li>
+        <li>Your name as the parent</li>
+        <li>Today's score from this lesson</li>
+      </ul>
+      <button class="fb-submit" onclick="openFeedbackForm()">Open Feedback Form 📋</button>
+      <p style="text-align:center;font-weight:700;color:#888;font-size:11px;margin-top:12px">
+        The form opens in a new tab in your browser
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+
+const BIGGEST_DATA = [
+  {a:7, b:2, answer:7},
+  {a:4, b:6, answer:6},
+  {a:3, b:8, answer:8},
+  {a:10,b:9, answer:10},
+  {a:6, b:7, answer:7}
+];
+
+const SMALLEST_DATA = [
+  {a:6, b:2, answer:2},
+  {a:1, b:5, answer:1},
+  {a:3, b:6, answer:3},
+  {a:8, b:9, answer:8},
+  {a:5, b:7, answer:5}
+];
+
+const BETWEEN_DATA = [
+  {left:4,  right:6,  answer:5},
+  {left:2,  right:4,  answer:3},
+  {left:1,  right:3,  answer:2},
+  {left:6,  right:8,  answer:7},
+  {left:9,  right:11, answer:10}
+];
+
+const LESS_DATA = [
+  {num:9,  answer:6},
+  {num:5,  answer:2},
+  {num:7,  answer:4},
+  {num:4,  answer:1},
+  {num:10, answer:7}
+];
+
+const MORE_DATA = [
+  {num:5, answer:7},
+  {num:1, answer:3},
+  {num:8, answer:10},
+  {num:7, answer:9},
+  {num:2, answer:4}
+];
+
+const COMPARE_DATA = [
+  {a:9, b:6, answer:'>'},
+  {a:4, b:5, answer:'<'},
+  {a:3, b:1, answer:'>'},
+  {a:4, b:4, answer:'='},
+  {a:7, b:3, answer:'>'}
+];
+
+// Tile colour pairs for choose activities
+const TILE_COLORS_L = ['ct-orange','ct-blue','ct-red','ct-teal','ct-indigo'];
+const TILE_COLORS_R = ['ct-purple','ct-pink','ct-green','ct-amber','ct-cyan'];
+
+// Results tracking
+const results = {
+  biggest: [],
+  smallest: [],
+  between: [],
+  less: [],
+  more: [],
+  compare: []
+};
+let totalCorrect = 0;
+const totalQuestions = 30; // 5+5+5+5+5+5
+
+// ══════════════════════════════════════════════════════
+// SPEECH SYNTHESIS
+// ══════════════════════════════════════════════════════
+
+let voices = [];
+let selectedVoice = null;
+
+function loadVoices(){
+  return new Promise(resolve => {
+    const load = () => {
+      voices = speechSynthesis.getVoices();
+      const prefs = [
+        v => /samantha/i.test(v.name),
+        v => /fiona/i.test(v.name),
+        v => /karen/i.test(v.name),
+        v => /victoria/i.test(v.name),
+        v => /zira/i.test(v.name),
+        v => /hazel/i.test(v.name),
+        v => /female/i.test(v.name) && /en/i.test(v.lang),
+        v => /en[-_](gb|us|za|au)/i.test(v.lang) && !/male/i.test(v.name),
+        v => /en/i.test(v.lang)
+      ];
+      for(const fn of prefs){
+        const found = voices.find(fn);
+        if(found){selectedVoice=found;break;}
+      }
+      resolve();
+    };
+    if(speechSynthesis.getVoices().length) load();
+    else speechSynthesis.onvoiceschanged = load;
+    setTimeout(resolve, 2000);
+  });
+}
+
+function speak(text, rate=0.85){
+  return new Promise(resolve => {
+    speechSynthesis.cancel();
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(text);
+      if(selectedVoice) u.voice = selectedVoice;
+      u.rate = rate;
+      u.pitch = 1.15;
+      u.volume = 1;
+      const keepAlive = setInterval(() => {
+        if(!speechSynthesis.speaking){clearInterval(keepAlive);return;}
+        speechSynthesis.pause();speechSynthesis.resume();
+      }, 5000);
+      u.onend = () => {clearInterval(keepAlive);setTimeout(resolve,300)};
+      u.onerror = () => {clearInterval(keepAlive);setTimeout(resolve,300)};
+      speechSynthesis.speak(u);
+    }, 50);
+  });
+}
+
+function setBubble(text){
+  document.getElementById('speechText').textContent = text;
+}
+
+async function sayAndShow(text, rate=0.82){
+  setBubble(text);
+  await speak(text, rate);
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function setProgress(pct){
+  document.getElementById('progressBar').style.width = pct+'%';
+}
+
+function showScene(id){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scene-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════════
+// SOUNDS
+// ══════════════════════════════════════════════════════
+
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio(){if(!audioCtx)audioCtx=new AudioCtx();}
+
+function playDing(){
+  if(!audioCtx)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.frequency.setValueAtTime(880,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1320,audioCtx.currentTime+0.1);
+  g.gain.setValueAtTime(0.3,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.4);
+  o.start();o.stop(audioCtx.currentTime+0.4);
+}
+
+function playBuzz(){
+  if(!audioCtx)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='square';
+  o.frequency.setValueAtTime(180,audioCtx.currentTime);
+  g.gain.setValueAtTime(0.2,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
+  o.start();o.stop(audioCtx.currentTime+0.3);
+}
+
+function playTada(){
+  if(!audioCtx)return;
+  const notes=[523,659,784,1047];
+  notes.forEach((f,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.frequency.value=f;
+    g.gain.setValueAtTime(0,audioCtx.currentTime+i*0.12);
+    g.gain.linearRampToValueAtTime(0.25,audioCtx.currentTime+i*0.12+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.12+0.5);
+    o.start(audioCtx.currentTime+i*0.12);
+    o.stop(audioCtx.currentTime+i*0.12+0.5);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// BUILD: CHOOSE BIGGEST / SMALLEST
+// ══════════════════════════════════════════════════════
+
+function buildChooseRows(containerId, data, category){
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  data.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'choose-row';
+    row.id = category+'-row-'+i;
+
+    const tileA = document.createElement('div');
+    tileA.className = 'choose-tile '+TILE_COLORS_L[i];
+    tileA.textContent = item.a;
+    tileA.id = category+'-tileA-'+i;
+
+    const orLbl = document.createElement('span');
+    orLbl.className = 'or-label';
+    orLbl.textContent = 'or';
+
+    const tileB = document.createElement('div');
+    tileB.className = 'choose-tile '+TILE_COLORS_R[i];
+    tileB.textContent = item.b;
+    tileB.id = category+'-tileB-'+i;
+
+    row.appendChild(tileA);
+    row.appendChild(orLbl);
+    row.appendChild(tileB);
+    c.appendChild(row);
+  });
+}
+
+function handleChoose(category, idx, data){
+  return new Promise(resolve => {
+    const item = data[idx];
+    const tileA = document.getElementById(category+'-tileA-'+idx);
+    const tileB = document.getElementById(category+'-tileB-'+idx);
+    const row = document.getElementById(category+'-row-'+idx);
+    let answered = false;
+
+    const pick = (chosen) => {
+      if(answered) return;
+      answered = true;
+      const isCorrect = chosen === item.answer;
+      const chosenTile = chosen === item.a ? tileA : tileB;
+      const otherTile = chosen === item.a ? tileB : tileA;
+
+      results[category].push({a:item.a, b:item.b, answer:item.answer, given:chosen, correct:isCorrect});
+
+      if(isCorrect){
+        chosenTile.classList.add('correct-pick');
+        otherTile.classList.add('not-chosen');
+        row.classList.add('answered-correct');
+        playDing();
+        totalCorrect++;
+      } else {
+        chosenTile.classList.add('wrong-pick');
+        otherTile.classList.add('not-chosen');
+        row.classList.add('answered-wrong');
+        playBuzz();
+      }
+
+      tileA.onclick = null;
+      tileB.onclick = null;
+      tileA.style.cursor = 'default';
+      tileB.style.cursor = 'default';
+
+      setTimeout(() => resolve(isCorrect), 600);
+    };
+
+    tileA.onclick = () => pick(item.a);
+    tileB.onclick = () => pick(item.b);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// BUILD: BETWEEN ROWS
+// ══════════════════════════════════════════════════════
+
+function buildBetweenRows(){
+  const c = document.getElementById('betweenRows');
+  c.innerHTML = '';
+  BETWEEN_DATA.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'num-row';
+    row.id = 'between-row-'+i;
+    row.innerHTML = `
+      <span class="num-display">${item.left}</span>
+      <span class="arrow-label">—</span>
+      <input type="number" class="answer-box" id="between-input-${i}"
+        inputmode="numeric" pattern="[0-9]*" maxlength="2"
+        autocomplete="off">
+      <button class="go-btn" id="between-go-${i}">Go</button>
+      <span class="arrow-label">—</span>
+      <span class="num-display">${item.right}</span>
+    `;
+    c.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// BUILD: LESS / MORE ROWS
+// ══════════════════════════════════════════════════════
+
+function buildLessRows(){
+  const c = document.getElementById('lessRows');
+  c.innerHTML = '';
+  LESS_DATA.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'num-row';
+    row.id = 'less-row-'+i;
+    row.innerHTML = `
+      <span class="num-display">${item.num}</span>
+      <span class="arrow-label">→</span>
+      <input type="number" class="answer-box" id="less-input-${i}"
+        inputmode="numeric" pattern="[0-9]*" maxlength="2"
+        autocomplete="off">
+      <button class="go-btn" id="less-go-${i}">Go</button>
+    `;
+    c.appendChild(row);
+  });
+}
+
+function buildMoreRows(){
+  const c = document.getElementById('moreRows');
+  c.innerHTML = '';
+  MORE_DATA.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'num-row';
+    row.id = 'more-row-'+i;
+    row.innerHTML = `
+      <span class="num-display">${item.num}</span>
+      <span class="arrow-label">→</span>
+      <input type="number" class="answer-box" id="more-input-${i}"
+        inputmode="numeric" pattern="[0-9]*" maxlength="2"
+        autocomplete="off">
+      <button class="go-btn" id="more-go-${i}">Go</button>
+    `;
+    c.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// BUILD: COMPARE ROWS
+// ══════════════════════════════════════════════════════
+
+function buildCompareRows(){
+  const c = document.getElementById('compareRows');
+  c.innerHTML = '';
+  COMPARE_DATA.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'compare-row';
+    row.id = 'compare-row-'+i;
+    row.innerHTML = `
+      <span class="compare-num">${item.a}</span>
+      <div class="sign-choices" id="compare-signs-${i}">
+        <button class="sign-btn" data-sign="<" id="compare-lt-${i}">&lt;</button>
+        <button class="sign-btn" data-sign="=" id="compare-eq-${i}">=</button>
+        <button class="sign-btn" data-sign=">" id="compare-gt-${i}">&gt;</button>
+      </div>
+      <span class="compare-num">${item.b}</span>
+    `;
+    c.appendChild(row);
+  });
+}
+
+function handleCompare(idx){
+  return new Promise(resolve => {
+    const item = COMPARE_DATA[idx];
+    const row = document.getElementById('compare-row-'+idx);
+    const btns = row.querySelectorAll('.sign-btn');
+    let answered = false;
+
+    btns.forEach(btn => {
+      btn.onclick = () => {
+        if(answered) return;
+        answered = true;
+
+        const chosen = btn.dataset.sign;
+        const isCorrect = chosen === item.answer;
+
+        results.compare.push({a:item.a, b:item.b, answer:item.answer, given:chosen, correct:isCorrect});
+
+        if(isCorrect){
+          btn.classList.add('correct-sign');
+          row.classList.add('answered-correct');
+          playDing();
+          totalCorrect++;
+        } else {
+          btn.classList.add('wrong-sign');
+          row.classList.add('answered-wrong');
+          playBuzz();
+          // Also highlight the correct one
+          btns.forEach(b => {
+            if(b.dataset.sign === item.answer) b.classList.add('correct-sign');
+          });
+        }
+
+        // Disable all buttons
+        btns.forEach(b => {
+          b.onclick = null;
+          b.style.cursor = 'default';
+          if(!b.classList.contains('correct-sign') && !b.classList.contains('wrong-sign')){
+            b.classList.add('dimmed');
+          }
+        });
+
+        setTimeout(() => resolve(isCorrect), 600);
+      };
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// TYPE-IN HANDLER (with Go button + auto-submit)
+// ══════════════════════════════════════════════════════
+
+function handleTypeIn(inputId, correctAnswer, category, dataItem){
+  return new Promise(resolve => {
+    const input = document.getElementById(inputId);
+    const row = input.closest('.num-row');
+    const goBtn = row.querySelector('.go-btn');
+    let submitted = false;
+    let debounceTimer = null;
+
+    const submit = async () => {
+      if(submitted) return;
+      const val = input.value.trim();
+      if(val === '') return;
+      submitted = true;
+      if(debounceTimer) clearTimeout(debounceTimer);
+      if(goBtn) goBtn.disabled = true;
+
+      const numVal = parseInt(val);
+      input.disabled = true;
+
+      const isCorrect = numVal === correctAnswer;
+      const record = {num: dataItem.num || dataItem.left, answer: correctAnswer, given: numVal, correct: isCorrect};
+      if(dataItem.left !== undefined){
+        record.left = dataItem.left;
+        record.right = dataItem.right;
+      }
+      results[category].push(record);
+
+      if(isCorrect){
+        input.classList.add('correct');
+        row.classList.add('answered-correct');
+        playDing();
+        totalCorrect++;
+      } else {
+        input.classList.add('wrong');
+        row.classList.add('answered-wrong');
+        playBuzz();
+      }
+
+      await sleep(400);
+      resolve(isCorrect);
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') submit();
+    });
+
+    if(goBtn) goBtn.addEventListener('click', submit);
+
+    input.addEventListener('input', () => {
+      if(debounceTimer) clearTimeout(debounceTimer);
+      const val = input.value.trim();
+      if(val === '') return;
+      debounceTimer = setTimeout(() => {
+        if(!submitted) submit();
+      }, 1000);
+    });
+
+    input.focus();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// MAIN LESSON FLOW
+// ══════════════════════════════════════════════════════
+
+async function beginLesson(){
+  initAudio();
+  await loadVoices();
+
+  // ─── INTRO ───
+  await sayAndShow("Hello there! Welcome back! I am Miss Numby, and today we are going to do revision! Are you ready? Read the instructions with me!");
+  await sleep(500);
+
+  await sayAndShow("Before we start, please tell your Mommy or Daddy what we are going to do today. Tell them: We are going to choose the biggest and smallest numbers! We will find the number that comes between two numbers. We will make numbers more and less. And we will use the bigger than, smaller than, and equals signs!");
+  await sleep(2000);
+
+  await sayAndShow("Did you tell them? Wonderful! Mommy or Daddy, please sit with your child and help them if they need it, but please give your child the opportunity to try by themselves first. Let's go!");
+  await sleep(1000);
+
+  // ═══ SECTION 1: CHOOSE THE BIGGEST NUMBER ═══
+  setProgress(3);
+  showScene('biggest');
+  buildChooseRows('biggestRows', BIGGEST_DATA, 'biggest');
+  await sleep(400);
+
+  await sayAndShow("Here is our first activity! Choose the biggest number! Read the instructions with me: Choose the biggest number!");
+  await sleep(800);
+
+  await sayAndShow("You will see two numbers. Tap on the number that is the BIGGEST. The biggest number is the one that is more. For example, if you see 3 or 1, the biggest number is 3! Remember, you only get one chance, so think carefully!");
+  await sleep(800);
+
+  for(let i=0; i<BIGGEST_DATA.length; i++){
+    const item = BIGGEST_DATA[i];
+    if(i > 0) await sleep(150);
+    setBubble(`Which is bigger: ${item.a} or ${item.b}? Tap on the biggest number!`);
+    const correct = await handleChoose('biggest', i, BIGGEST_DATA);
+    if(correct){
+      await sayAndShow(`Yes! ${item.answer} is the biggest number! Well done!`);
+    } else {
+      await sayAndShow(`Oh no! The biggest number is ${item.answer}. Let's keep going!`);
+    }
+  }
+
+  await sayAndShow("You have finished the first activity! Great job! Let's move on!");
+  await sleep(600);
+
+  // ═══ SECTION 2: CHOOSE THE SMALLEST NUMBER ═══
+  setProgress(18);
+  showScene('smallest');
+  buildChooseRows('smallestRows', SMALLEST_DATA, 'smallest');
+  await sleep(400);
+
+  await sayAndShow("Now we are doing our second activity! Choose the smallest number! Read the instructions with me: Choose the smallest number!");
+  await sleep(800);
+
+  await sayAndShow("You will see two numbers. This time, tap on the number that is the SMALLEST. The smallest number is the one that is less. Remember, you only get one chance!");
+  await sleep(800);
+
+  for(let i=0; i<SMALLEST_DATA.length; i++){
+    const item = SMALLEST_DATA[i];
+    if(i > 0) await sleep(150);
+    setBubble(`Which is smaller: ${item.a} or ${item.b}? Tap on the smallest number!`);
+    const correct = await handleChoose('smallest', i, SMALLEST_DATA);
+    if(correct){
+      await sayAndShow(`That's right! ${item.answer} is the smallest number! Fantastic!`);
+    } else {
+      await sayAndShow(`The smallest number is ${item.answer}. Keep trying your best!`);
+    }
+  }
+
+  await sayAndShow("Well done! You have finished the second activity! You are doing so well!");
+  await sleep(600);
+
+  // ═══ SECTION 3: WHAT NUMBER COMES BETWEEN ═══
+  setProgress(33);
+  showScene('between');
+  buildBetweenRows();
+  await sleep(400);
+
+  await sayAndShow("Here is our third activity! What number comes between? Read the instructions with me: What number comes between?");
+  await sleep(800);
+
+  await sayAndShow("You will see two numbers with a box in the middle. You need to find the number that goes between them. For example, what number comes between 1 and 3? That's right, 2! Because we count: 1, 2, 3!");
+  await sleep(800);
+
+  await sayAndShow("Type your answer in the box. You can use your fingers to help you count! Remember, you only get one chance! Mommy or Daddy, please let your child try first.");
+  await sleep(500);
+
+  for(let i=0; i<BETWEEN_DATA.length; i++){
+    const item = BETWEEN_DATA[i];
+    if(i > 0) await sleep(150);
+    setBubble(`What number comes between ${item.left} and ${item.right}? Type your answer!`);
+    const correct = await handleTypeIn('between-input-'+i, item.answer, 'between', item);
+    if(correct){
+      await sayAndShow(`Yes! ${item.answer} comes between ${item.left} and ${item.right}! Super!`);
+    } else {
+      await sayAndShow(`The number between ${item.left} and ${item.right} is ${item.answer}. Keep going!`);
+    }
+  }
+
+  await sayAndShow("You have finished the third activity! Let's continue!");
+  await sleep(600);
+
+  // ═══ SECTION 4: MAKE 3 LESS ═══
+  setProgress(48);
+  showScene('less');
+  buildLessRows();
+  await sleep(400);
+
+  await sayAndShow("Now we are doing activity four! Make each number 3 less! Read the instructions with me: Make each number 3 less!");
+  await sleep(800);
+
+  await sayAndShow("When we make a number 3 less, we put the given number in our head and count back 3 on our fingers. For example, 3 less than 6: put 6 in your head, now count 3 back on your fingers: 5, 4, 3! The answer is 3!");
+  await sleep(800);
+
+  await sayAndShow("Now you try! Put the number in your head and count 3 back on your fingers. Type your answer in the box. Remember, you only get one chance!");
+  await sleep(500);
+
+  for(let i=0; i<LESS_DATA.length; i++){
+    const item = LESS_DATA[i];
+    if(i > 0) await sleep(150);
+    setBubble(`What is 3 less than ${item.num}? Type your answer!`);
+    const correct = await handleTypeIn('less-input-'+i, item.answer, 'less', item);
+    if(correct){
+      await sayAndShow(`That's right! 3 less than ${item.num} is ${item.answer}! Excellent!`);
+    } else {
+      await sayAndShow(`3 less than ${item.num} is ${item.answer}. Don't worry, we will practice again!`);
+    }
+  }
+
+  await sayAndShow("Great work! You have finished the fourth activity! Almost there!");
+  await sleep(600);
+
+  // ═══ SECTION 5: MAKE 2 MORE ═══
+  setProgress(63);
+  showScene('more');
+  buildMoreRows();
+  await sleep(400);
+
+  await sayAndShow("Here is activity five! Make each number 2 more! Read the instructions with me: Make each number 2 more!");
+  await sleep(800);
+
+  await sayAndShow("When we make a number 2 more, we put the given number in our head and count 2 on, on our fingers. For example, 2 more than 3: put 3 in your head, now count 2 on, on your fingers: 4, 5! The answer is 5!");
+  await sleep(800);
+
+  await sayAndShow("Now you try! Put the number in your head and count 2 on, on your fingers. Type your answer in the box. You only get one chance, so do your best!");
+  await sleep(500);
+
+  for(let i=0; i<MORE_DATA.length; i++){
+    const item = MORE_DATA[i];
+    if(i > 0) await sleep(150);
+    setBubble(`What is 2 more than ${item.num}? Type your answer!`);
+    const correct = await handleTypeIn('more-input-'+i, item.answer, 'more', item);
+    if(correct){
+      await sayAndShow(`Yes! 2 more than ${item.num} is ${item.answer}! Wonderful!`);
+    } else {
+      await sayAndShow(`2 more than ${item.num} is ${item.answer}. Keep going, you are doing great!`);
+    }
+  }
+
+  await sayAndShow("You have finished the fifth activity! One more to go! You are amazing!");
+  await sleep(600);
+
+  // ═══ SECTION 6: BIGGER THAN, SMALLER THAN, EQUALS ═══
+  setProgress(80);
+  showScene('compare');
+  buildCompareRows();
+  await sleep(400);
+
+  await sayAndShow("Here is our last activity! Bigger than, smaller than, or equal? Read the instructions with me!");
+  await sleep(800);
+
+  await sayAndShow("Look at the two numbers. You need to choose the correct sign. Remember: the hungry crocodile always eats the bigger number! The open mouth points to the bigger number. If both numbers are the same, we use the equals sign.");
+  await sleep(1000);
+
+  await sayAndShow("The less-than sign looks like this: the small point is on the left. The greater-than sign: the small point is on the right. And the equals sign means both numbers are the same. Now tap on the correct sign for each pair!");
+  await sleep(500);
+
+  for(let i=0; i<COMPARE_DATA.length; i++){
+    const item = COMPARE_DATA[i];
+    if(i > 0) await sleep(150);
+    const signWord = item.answer === '>' ? 'bigger than' : item.answer === '<' ? 'smaller than' : 'equal to';
+    setBubble(`Is ${item.a} bigger than, smaller than, or equal to ${item.b}? Tap the correct sign!`);
+    const correct = await handleCompare(i);
+    if(correct){
+      await sayAndShow(`Yes! ${item.a} is ${signWord} ${item.b}! Well done!`);
+    } else {
+      const correctWord = item.answer === '>' ? 'bigger than' : item.answer === '<' ? 'smaller than' : 'equal to';
+      await sayAndShow(`${item.a} is ${correctWord} ${item.b}. The correct sign is ${item.answer}. Let's keep going!`);
+    }
+  }
+
+  await sayAndShow("You have finished ALL the activities! Let's see how you did!");
+  await sleep(600);
+
+  // ═══ RESULTS ═══
+  setProgress(100);
+  showScene('results');
+  showResults();
+  playTada();
+  launchConfetti();
+
+  await sleep(1500);
+
+  const wrongItems = getWrongItems();
+  if(wrongItems.length > 0){
+    await sayAndShow("Mommy or Daddy, please go through the answers that were wrong with your child. Talk about each one together and practice them. There will be another opportunity to do a similar activity so your child can practice some more. Thank you for supporting your child's learning!");
+  } else {
+    await sayAndShow("What an incredible job! You got everything right! Mommy or Daddy, your child has done amazing work today! Keep practicing to stay sharp! See you next time!");
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════
+
+function getWrongItems(){
+  const wrong = [];
+  Object.keys(results).forEach(cat => {
+    results[cat].forEach(r => {
+      if(!r.correct) wrong.push(r);
+    });
+  });
+  return wrong;
+}
+
+function showResults(){
+  const pct = Math.round((totalCorrect / totalQuestions) * 100);
+  document.getElementById('scoreDisplay').textContent = `${totalCorrect} / ${totalQuestions} (${pct}%)`;
+
+  let html = '';
+
+  // Biggest
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:8px">Choose the biggest number:</p>';
+  results.biggest.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} ${r.a} or ${r.b}: you chose ${r.given} ${r.correct ? '(Correct!)' : `(Wrong — answer: ${r.answer})`}</p>`;
+  });
+
+  // Smallest
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:12px">Choose the smallest number:</p>';
+  results.smallest.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} ${r.a} or ${r.b}: you chose ${r.given} ${r.correct ? '(Correct!)' : `(Wrong — answer: ${r.answer})`}</p>`;
+  });
+
+  // Between
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:12px">What number comes between:</p>';
+  results.between.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} Between ${r.left} and ${r.right}: you typed ${r.given} ${r.correct ? '(Correct!)' : `(Wrong — answer: ${r.answer})`}</p>`;
+  });
+
+  // Less
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:12px">Make each number 3 less:</p>';
+  results.less.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} 3 less than ${r.num}: you typed ${r.given} ${r.correct ? '(Correct!)' : `(Wrong — answer: ${r.answer})`}</p>`;
+  });
+
+  // More
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:12px">Make each number 2 more:</p>';
+  results.more.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} 2 more than ${r.num}: you typed ${r.given} ${r.correct ? '(Correct!)' : `(Wrong — answer: ${r.answer})`}</p>`;
+  });
+
+  // Compare
+  html += '<p style="font-family:Fredoka One,cursive;color:#2E7D32;margin-top:12px">Bigger than, smaller than, or equals:</p>';
+  results.compare.forEach(r => {
+    const cls = r.correct ? 'result-correct' : 'result-wrong';
+    const icon = r.correct ? '✅' : '❌';
+    html += `<p class="${cls}">${icon} ${r.a} ___ ${r.b}: you chose "${r.given}" ${r.correct ? '(Correct!)' : `(Wrong — answer: "${r.answer}")`}</p>`;
+  });
+
+  document.getElementById('resultsDetail').innerHTML = html;
+
+  // Parent message
+  const wrong = getWrongItems();
+  let parentMsg = '';
+  if(wrong.length === 0){
+    parentMsg = `<p>🎉 <strong>Amazing!</strong> Your child got every answer correct! They have a strong understanding of these concepts.</p>
+    <p style="margin-top:8px">Please continue to practice these skills regularly to keep them fresh. Well done to both of you!</p>`;
+  } else {
+    parentMsg = `<p>📋 <strong>Dear Parent,</strong></p>
+    <p style="margin-top:6px">Please go through the answers marked with ❌ with your child. Talk about each one and practice together.</p>
+    <p style="margin-top:6px">There will be <strong>another opportunity</strong> to do a similar activity so your child can practice some more.</p>
+    <p style="margin-top:6px">Remember: practice makes perfect! You can count together during everyday activities — counting steps, counting fruit, counting toys. You can also practise the bigger than, smaller than, and equals signs with two groups of objects.</p>
+    <p style="margin-top:8px">Thank you for supporting your child's learning! 💚</p>`;
+  }
+  document.getElementById('parentMessage').innerHTML = parentMsg;
+}
+
+// ══════════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════════
+
+function launchConfetti(){
+  const cols=['#FFF176','#66BB6A','#42A5F5','#EF5350','#AB47BC','#FF7043','#26A69A'];
+  const wrap=document.createElement('div');wrap.className='confetti-wrap';
+  document.body.appendChild(wrap);
+  for(let i=0;i<65;i++){
+    const p=document.createElement('div');p.className='cp';
+    p.style.cssText=`
+      position:absolute;left:${Math.random()*100}%;top:-20px;
+      width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;
+      background:${cols[i%cols.length]};
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      animation:confFall ${2+Math.random()*2}s linear ${Math.random()*1.5}s forwards;
+    `;
+    wrap.appendChild(p);
+  }
+  setTimeout(()=>wrap.remove(),5500);
+}
+
+// ══════════════════════════════════════════════════════
+// PASSWORD
+// ══════════════════════════════════════════════════════
+
+const MONTHLY_PASSWORD = "balmoral-april"; // Balmoral Primary — April 2026
+
+function checkPassword(){
+  const input = document.getElementById('pwInput').value.trim().toLowerCase();
+  if(input === MONTHLY_PASSWORD){
+    document.getElementById('passwordScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initAfterPassword();
+  } else {
+    document.getElementById('pwError').textContent = 'Incorrect password. Please try again.';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEEDBACK FORM
+// ══════════════════════════════════════════════════════
+
+const FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSemC5qB2ZsXff2tgfoZMYzE0MfcZwiUQNfiY0gveCGDHvD_RA/viewform";
+
+function openFeedbackForm(){
+  window.open(FEEDBACK_FORM_URL, '_blank');
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+
+async function initAfterPassword(){
+  await loadVoices();
+  setBubble("Hello! Press 'Let's Start' when you are ready!");
+  await speak("Hello! Press Let's Start when you are ready!", 0.85);
+}
+
+window.addEventListener('load', () => {
+  const pwInput = document.getElementById('pwInput');
+  pwInput.focus();
+  pwInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') checkPassword();
+  });
+});
+</script>
+</body>
+</html>
